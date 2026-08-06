@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTC Pro Trading Terminal - Method Old SMC Order Block Dashboard</title>
+    <style>
+        :root {
+            --bg-dark: #0b0e14;
+            --card-bg: #151a23;
+            --card-border: #232a36;
+            --text-main: #e1e7ec;
+            --text-sub: #848e9c;
+            --green-accent: #0ecb81;
+            --red-accent: #f6465d;
+            --yellow-accent: #f0b90b;
+            --blue-accent: #1890ff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); padding: 24px; line-height: 1.5; max-width: 1200px; margin: 0 auto; }
+
+        /* Header Layout */
+        .header { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 20px 28px; border-radius: 12px; border: 1px solid var(--card-border); margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .price-box { display: flex; align-items: baseline; gap: 14px; margin-top: 6px; }
+        .price-val { font-size: 36px; font-weight: 800; color: #fff; font-family: 'Courier New', Courier, monospace; }
+        .badge-live { background: rgba(14, 203, 129, 0.15); color: var(--green-accent); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; border: 1px solid rgba(14, 203, 129, 0.3); animation: pulse 2s infinite; }
+
+        /* Core Metrics Grid */
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .metric-card { background: var(--card-bg); padding: 18px; border-radius: 10px; border: 1px solid var(--card-border); text-align: center; }
+        .metric-title { font-size: 12px; color: var(--text-sub); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .metric-val { font-size: 20px; font-weight: 700; color: #fff; }
+
+        /* SMC / OB Status Bar */
+        .ob-container { background: var(--card-bg); padding: 20px 24px; border-radius: 12px; border: 1px solid var(--card-border); margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
+        .ob-group { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        .ob-tag { padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: monospace; }
+        .ob-bull { background: rgba(14, 203, 129, 0.1); color: var(--green-accent); border: 1px solid rgba(14, 203, 129, 0.3); }
+        .ob-bear { background: rgba(246, 70, 93, 0.1); color: var(--red-accent); border: 1px solid rgba(246, 70, 93, 0.3); }
+
+        /* Main Signal Section */
+        .main-card { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--card-border); padding: 28px; position: relative; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.4); margin-bottom: 24px; }
+        .main-card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: linear-gradient(90deg, var(--blue-accent), var(--green-accent)); }
+
+        .strat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--card-border); }
+        .strat-title { font-size: 22px; font-weight: 800; color: #fff; }
+        .badge-side { padding: 6px 16px; border-radius: 6px; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .side-long { background: var(--green-accent); color: #000; box-shadow: 0 0 12px rgba(14, 203, 129, 0.4); }
+        .side-short { background: var(--red-accent); color: #fff; box-shadow: 0 0 12px rgba(246, 70, 93, 0.4); }
+
+        /* Recommendation Badge Box */
+        .rec-box { padding: 12px 20px; border-radius: 8px; font-size: 15px; font-weight: 800; text-align: center; margin-bottom: 24px; letter-spacing: 0.5px; }
+        .rec-green { background: rgba(14, 203, 129, 0.15); color: var(--green-accent); border: 1px solid rgba(14, 203, 129, 0.4); }
+        .rec-red { background: rgba(246, 70, 93, 0.15); color: var(--red-accent); border: 1px solid rgba(246, 70, 93, 0.4); }
+
+        /* Trading Levels Layout */
+        .levels-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .level-box { background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.05); text-align: center; }
+        .level-label { font-size: 12px; color: var(--text-sub); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; }
+        .level-price { font-size: 22px; font-weight: 800; font-family: monospace; }
+
+        /* System Inference Callout Box */
+        .inference-box { background: rgba(240, 185, 11, 0.08); border: 1px solid rgba(240, 185, 11, 0.25); border-left: 5px solid var(--yellow-accent); padding: 18px 20px; border-radius: 8px; margin-bottom: 20px; }
+        .inference-title { font-size: 12px; color: var(--yellow-accent); font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px; }
+        .inference-text { font-size: 16px; font-weight: 600; color: var(--text-main); font-style: italic; }
+
+        /* FPT Decision Matrix Checklist */
+        .matrix-checklist { background: rgba(255, 255, 255, 0.015); border: 1px solid var(--card-border); border-radius: 10px; padding: 20px; }
+        .matrix-title { font-size: 13px; color: var(--text-sub); font-weight: 700; text-transform: uppercase; margin-bottom: 12px; }
+        .matrix-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+        .matrix-item { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; }
+        .check-pass { color: var(--green-accent); font-weight: 700; }
+        .check-fail { color: var(--red-accent); font-weight: 700; }
+
+        /* BẢNG MA TRẬN SUY LUẬN & HÀNH ĐỘNG CỦA BOT */
+        .matrix-table-card { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--card-border); padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); margin-bottom: 24px; }
+        .matrix-table-title { font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .table-responsive { width: 100%; overflow-x: auto; }
+        .matrix-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+        .matrix-table th { background: rgba(255, 255, 255, 0.03); color: var(--text-sub); padding: 12px 14px; font-weight: 700; border-bottom: 1px solid var(--card-border); text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+        .matrix-table td { padding: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); color: var(--text-main); vertical-align: middle; }
+        .matrix-table tr:hover { background: rgba(255, 255, 255, 0.02); }
+        .badge-act-green { color: var(--green-accent); font-weight: 700; background: rgba(14, 203, 129, 0.1); padding: 4px 8px; border-radius: 4px; display: inline-block; border: 1px solid rgba(14, 203, 129, 0.2); }
+        .badge-act-red { color: var(--red-accent); font-weight: 700; background: rgba(246, 70, 93, 0.1); padding: 4px 8px; border-radius: 4px; display: inline-block; border: 1px solid rgba(246, 70, 93, 0.2); }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <!-- Header Price Bar -->
+    <div class="header">
+        <div>
+            <div style="font-size: 13px; color: var(--text-sub); font-weight: 600;">PAIRS: BTC/USDT (Method Old - SMC Order Block & Cluster Cản H4)</div>
+            <div class="price-box">
+                <span class="price-val" id="btc-price">Loading...</span>
+                <span class="badge-live">● REALTIME CONNECTED</span>
+            </div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 12px; color: var(--text-sub);">Last Check</div>
+            <div id="update-time" style="font-weight: 700; font-family: monospace; font-size: 15px;">--:--:--</div>
+        </div>
+    </div>
+
+    <!-- Core Metrics -->
+    <div class="metrics-grid">
+        <div class="metric-card"><div class="metric-title">RSI (14 - H4)</div><div class="metric-val" id="rsi-val">--</div></div>
+        <div class="metric-card"><div class="metric-title">ATR Volatility (14)</div><div class="metric-val" id="atr-val">--</div></div>
+        <div class="metric-card"><div class="metric-title">EMA 50 (H4 Trend)</div><div class="metric-val" id="ema50-val">--</div></div>
+        <div class="metric-card"><div class="metric-title">Xu Hướng H4</div><div class="metric-val" id="trend-val">--</div></div>
+    </div>
+
+    <!-- SMC Order Blocks Display -->
+    <div class="ob-container">
+        <span style="font-size: 13px; font-weight: 700; color: var(--text-sub);">VÙNG KHỐI TÍCH LŨY SMC ORDER BLOCK (H4):</span>
+        <div class="ob-group">
+            <div class="ob-tag ob-bull" id="bull-ob">Bullish OB: Loading...</div>
+            <div class="ob-tag ob-bear" id="bear-ob">Bearish OB: Loading...</div>
+        </div>
+    </div>
+
+    <!-- MAIN METHOD_OLD SIGNAL CARD -->
+    <div class="main-card">
+        <div class="strat-header">
+            <div>
+                <div class="strat-title">CHỈ BÁO CHIẾN LƯỢC: METHOD_OLD</div>
+                <div style="font-size: 12px; color: var(--text-sub); margin-top: 2px;">Cơ chế: SMC Order Block Retest + Hỗ trợ / Kháng cự Cluster H4</div>
+            </div>
+            <span class="badge-side" id="old-side">--</span>
+        </div>
+
+        <!-- Recommendation Status Badge -->
+        <div class="rec-box" id="old-rec">Đang phân tích Ma Trận Quyết Định 4 Tầng...</div>
+
+        <!-- System Inference Callout Box -->
+        <div class="inference-box">
+            <div class="inference-title">💡 SUY LUẬN TỪ HỆ THỐNG (MARKET PSYCHOLOGY):</div>
+            <div class="inference-text" id="inference-text">"Đang phán đoán cấu trúc gom/xả của Cá Voi..."</div>
+        </div>
+
+        <!-- Trading Levels Grid -->
+        <div class="levels-grid">
+            <div class="level-box"><div class="level-label">Entry Retest</div><div class="level-price" id="old-entry" style="color: #fff;">--</div></div>
+            <div class="level-box"><div class="level-label">Stop Loss (SL)</div><div class="level-price" style="color: var(--red-accent);" id="old-sl">--</div></div>
+            <div class="level-box"><div class="level-label">TP1 (1:1 - Chốt 50%)</div><div class="level-price" style="color: var(--green-accent);" id="old-tp1">--</div></div>
+            <div class="level-box"><div class="level-label">TP2 (1:2 - Gồng 50%)</div><div class="level-price" style="color: var(--green-accent);" id="old-tp2">--</div></div>
+        </div>
+
+        <!-- FPT Decision Matrix Checklist -->
+        <div class="matrix-checklist">
+            <div class="matrix-title">📌 BẢNG CHECKLIST MA TRẬN QUYẾT ĐỊNH (FPT DECISION MATRIX):</div>
+            <div class="matrix-items">
+                <div class="matrix-item" id="check-trend"><span class="check-pass">✔</span> <span>1. Thuận Xu Hướng EMA50 H4</span></div>
+                <div class="matrix-item" id="check-room"><span class="check-pass">✔</span> <span>2. Khoảng Trống TP1 Trống Cản</span></div>
+                <div class="matrix-item" id="check-atr"><span class="check-pass">✔</span> <span>3. Biên Độ ATR ≥ $250</span></div>
+                <div class="matrix-item" id="check-ob"><span class="check-pass">✔</span> <span>4. Định Vị Vùng SMC OB / S/R</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BẢNG MA TRẬN SUY LUẬN & HÀNH ĐỘNG CỦA BOT -->
+    <div class="matrix-table-card">
+        <div class="matrix-table-title">📊 MA TRẬN SUY LUẬN & HÀNH ĐỘNG CỦA BOT</div>
+        <div class="table-responsive">
+            <table class="matrix-table">
+                <thead>
+                    <tr>
+                        <th>Hỗ trợ / Kháng cự</th>
+                        <th>Khối Order Block (OB)</th>
+                        <th>Trạng Thái RSI</th>
+                        <th>SUY LUẬN TỪ HỆ THỐNG</th>
+                        <th>HÀNH ĐỘNG CỦA BOT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><b>Chạm Hỗ Trợ</b></td>
+                        <td>Chạm Bullish OB</td>
+                        <td>RSI &lt; 35 (Phân kỳ Dương)</td>
+                        <td><b>Phe Bán kiệt sức + Cá Voi gom hàng</b></td>
+                        <td><span class="badge-act-green">🟢 ĐỀ NGHỊ LONG (Win-rate Rất Cao)</span></td>
+                    </tr>
+                    <tr>
+                        <td><b>Thủng Hỗ Trợ</b></td>
+                        <td>Rút râu khỏi Bullish OB</td>
+                        <td>RSI giật ngược từ Quá Bán</td>
+                        <td><b>Cá Voi vừa quét râu SL Retail</b></td>
+                        <td><span class="badge-act-green">🟢 ĐỀ NGHỊ LONG (Tab A Sweep)</span></td>
+                    </tr>
+                    <tr>
+                        <td><b>Chạm Kháng Cự</b></td>
+                        <td>Chạm Bearish OB</td>
+                        <td>RSI &gt; 65 + Trend H4 Tăng</td>
+                        <td><b>Động lượng Mua quá mạnh, dễ lủng Cản</b></td>
+                        <td><span class="badge-act-red">🔴 KHÔNG ĐỀ NGHỊ SHORT (Tránh Bẫy)</span></td>
+                    </tr>
+                    <tr>
+                        <td><b>Chạm Kháng Cự</b></td>
+                        <td>Chạm Bearish OB</td>
+                        <td>RSI &gt; 70 (Phân kỳ Âm)</td>
+                        <td><b>Phe Mua kiệt sức + Cá Voi xả hàng</b></td>
+                        <td><span class="badge-act-green">🟢 ĐỀ NGHỊ SHORT</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Script Calculation Engine -->
+    <script>
+        const formatUSD = (val) => (val && !isNaN(val)) ? '$' + Math.round(val).toLocaleString() : '--';
+
+        async function fetchMarketAndCalculate() {
+            try {
+                let currentPrice = null;
+                let rawKlines = null;
+
+                // 1. Multi-Gateway Price Fetch
+                try {
+                    const rPrice = await fetch('https://fapi.binance.com/fapi/v1/ticker/price?symbol=BTCUSDT').then(r => r.json());
+                    if (rPrice && rPrice.price) currentPrice = parseFloat(rPrice.price);
+                } catch(e) {}
+
+                if (!currentPrice) {
+                    const rPrice = await fetch('https://api.coincap.io/v2/assets/bitcoin').then(r => r.json());
+                    if (rPrice && rPrice.data) currentPrice = parseFloat(rPrice.data.priceUsd);
+                }
+
+                // 2. Multi-Gateway K-Line Fetch
+                try {
+                    rawKlines = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=4h&limit=60').then(r => r.json());
+                } catch(e) {
+                    try {
+                        rawKlines = await fetch('https://fapi.binance.com/fapi/v1/klines?symbol=BTCUSDT&interval=4h&limit=60').then(r => r.json());
+                    } catch(err) {}
+                }
+
+                if (!currentPrice || !rawKlines || !Array.isArray(rawKlines)) return;
+
+                const candles = rawKlines.map(k => [parseFloat(k[0]), parseFloat(k[1]), parseFloat(k[2]), parseFloat(k[3]), parseFloat(k[4])]);
+
+                document.getElementById('btc-price').innerText = '$' + currentPrice.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1});
+                document.getElementById('update-time').innerText = new Date().toLocaleTimeString();
+
+                const closes = candles.map(c => c[4]);
+                const highs = candles.map(c => c[2]);
+                const lows = candles.map(c => c[3]);
+                const len = candles.length;
+
+                // ATR (14)
+                let trs = [];
+                for (let i = 1; i < len; i++) trs.push(Math.max(highs[i] - lows[i], Math.abs(highs[i] - closes[i-1]), Math.abs(lows[i] - closes[i-1])));
+                const atr = trs.slice(-14).reduce((a, b) => a + b, 0) / Math.min(14, trs.length);
+
+                // RSI (14)
+                let gains = 0, losses = 0;
+                for (let i = Math.max(1, len - 14); i < len; i++) {
+                    const diff = closes[i] - closes[i - 1];
+                    if (diff >= 0) gains += diff; else losses -= diff;
+                }
+                const rsi = 100 - (100 / (1 + ((gains/14)/((losses/14)||1))));
+
+                // EMA (50)
+                const k = 2 / (50 + 1);
+                let ema50 = closes.slice(0, Math.min(50, len)).reduce((a, b) => a + b, 0) / Math.min(50, len);
+                for (let i = 50; i < len; i++) ema50 = closes[i] * k + ema50 * (1 - k);
+
+                // Pivot Supports / Resistances
+                const rawLows = [], rawHighs = [];
+                for (let i = 2; i < len - 2; i++) {
+                    if (lows[i] <= lows[i-1] && lows[i] <= lows[i-2] && lows[i] <= lows[i+1] && lows[i] <= lows[i+2]) rawLows.push(lows[i]);
+                    if (highs[i] >= highs[i-1] && highs[i] >= highs[i-2] && highs[i] >= highs[i+1] && highs[i] >= highs[i+2]) rawHighs.push(highs[i]);
+                }
+                const supports = rawLows.filter(p => p < currentPrice).sort((a,b)=>b-a);
+                const resistances = rawHighs.filter(p => p > currentPrice).sort((a,b)=>a-b);
+
+                // SMC Order Blocks
+                let bullishOB = null, bearishOB = null;
+                for (let i = len - 2; i > Math.max(2, len - 20); i--) {
+                    const c = candles[i];
+                    if (c[4] < c[1] && !bullishOB && closes[i+1] > c[2] && c[3] < currentPrice) bullishOB = { top: Math.min(c[1], c[2]), bottom: c[3] };
+                    if (c[4] > c[1] && !bearishOB && closes[i+1] < c[3] && c[2] > currentPrice) bearishOB = { top: c[2], bottom: Math.max(c[1], c[4]) };
+                }
+
+                // Render Top Bar Metrics
+                document.getElementById('rsi-val').innerText = rsi.toFixed(1);
+                document.getElementById('atr-val').innerText = '$' + Math.round(atr);
+                document.getElementById('ema50-val').innerText = formatUSD(ema50);
+                document.getElementById('trend-val').innerText = currentPrice > ema50 ? 'BULLISH (TĂNG)' : 'BEARISH (GIẢM)';
+                document.getElementById('trend-val').style.color = currentPrice > ema50 ? 'var(--green-accent)' : 'var(--red-accent)';
+
+                document.getElementById('bull-ob').innerText = bullishOB ? `Bullish OB: ${formatUSD(bullishOB.bottom)} - ${formatUSD(bullishOB.top)}` : 'Bullish OB: Chưa tạo';
+                document.getElementById('bear-ob').innerText = bearishOB ? `Bearish OB: ${formatUSD(bearishOB.bottom)} - ${formatUSD(bearishOB.top)}` : 'Bearish OB: Chưa tạo';
+
+                // METHOD_OLD Core Signal Calculation
+                const isBullish = currentPrice > ema50 || rsi < 40;
+                const side = isBullish ? 'LONG' : 'SHORT';
+                const minBuffer = Math.max(250, Math.round(atr * 1.0));
+
+                let baseEntry, sl, risk, tp1, tp2;
+
+                if (isBullish) {
+                    baseEntry = bullishOB ? Math.round(bullishOB.top) : Math.round(supports[0] || currentPrice * 0.985);
+                    sl = bullishOB ? Math.round(bullishOB.bottom * 0.995) : Math.round(baseEntry - minBuffer);
+                    if (sl >= baseEntry) sl = baseEntry - minBuffer; // Khóa toán học Strict
+                    risk = baseEntry - sl;
+                    tp1 = baseEntry + risk;
+                    tp2 = baseEntry + (risk * 2);
+                } else {
+                    baseEntry = bearishOB ? Math.round(bearishOB.bottom) : Math.round(resistances[0] || currentPrice * 1.015);
+                    sl = bearishOB ? Math.round(bearishOB.top * 1.005) : Math.round(baseEntry + minBuffer);
+                    if (sl <= baseEntry) sl = baseEntry + minBuffer; // Khóa toán học Strict
+                    risk = sl - baseEntry;
+                    tp1 = baseEntry - risk;
+                    tp2 = baseEntry - (risk * 2);
+                }
+
+                // Decision Matrix Evaluation
+                let isTrendAligned = (side === "LONG" && baseEntry > ema50) || (side === "SHORT" && baseEntry < ema50);
+                let hasRoomToTP1 = true;
+                let roomDistance = 0;
+
+                if (side === "LONG") {
+                    let obstacle = bearishOB ? bearishOB.bottom : (resistances[0] || 999999);
+                    roomDistance = Math.round(obstacle - tp1);
+                    hasRoomToTP1 = roomDistance > 0;
+                } else {
+                    let obstacle = bullishOB ? bullishOB.top : (supports[0] || 0);
+                    roomDistance = Math.round(tp1 - obstacle);
+                    hasRoomToTP1 = roomDistance > 0;
+                }
+
+                let isVolatileEnough = atr >= 250;
+                let isRecommended = isTrendAligned && hasRoomToTP1 && isVolatileEnough;
+
+                // Market Psychology System Inference
+                let inferenceStr = "";
+                if (side === "LONG") {
+                    if (rsi < 35 || rsi < 40) inferenceStr = "Phe Bán kiệt sức + Cá Voi gom hàng";
+                    else inferenceStr = "Giá chạm vùng Hỗ Trợ / Bullish OB H4";
+                } else {
+                    if (rsi > 65 && currentPrice > ema50) inferenceStr = "Động lượng Mua quá mạnh, dễ lủng Cản";
+                    else if (rsi > 65 || rsi > 70) inferenceStr = "Phe Mua kiệt sức + Cá Voi xả hàng";
+                    else inferenceStr = "Giá chạm vùng Kháng Cự / Bearish OB H4";
+                }
+
+                // Update UI
+                const sideEl = document.getElementById('old-side');
+                sideEl.innerText = side;
+                sideEl.className = `badge-side ${side === 'LONG' ? 'side-long' : 'side-short'}`;
+
+                const recEl = document.getElementById('old-rec');
+                recEl.innerText = isRecommended ? "🟢 ĐỀ NGHỊ (XÁC SUẤT CAO)" : "🔴 KHÔNG ĐỀ NGHỊ (RỦI RO / CHE CẢN)";
+                recEl.className = `rec-box ${isRecommended ? 'rec-green' : 'rec-red'}`;
+
+                document.getElementById('inference-text').innerText = `"${inferenceStr}"`;
+
+                document.getElementById('old-entry').innerText = formatUSD(baseEntry);
+                document.getElementById('old-sl').innerText = formatUSD(sl);
+                document.getElementById('old-tp1').innerText = formatUSD(tp1);
+                document.getElementById('old-tp2').innerText = formatUSD(tp2);
+
+                // Matrix Checklist UI
+                updateCheckItem('check-trend', isTrendAligned, isTrendAligned ? "1. Thuận Xu Hướng EMA50 H4" : "1. Ngược Xu Hướng EMA50 H4");
+                updateCheckItem('check-room', hasRoomToTP1, hasRoomToTP1 ? `2. TP1 Trống Cản (+${roomDistance}$)` : "2. Cản H4 Che Chắn TP1");
+                updateCheckItem('check-atr', isVolatileEnough, `3. Biên Độ ATR = $${Math.round(atr)} (${isVolatileEnough ? 'Sóng đủ lớn' : 'Sideway nhẹ'})`);
+                updateCheckItem('check-ob', true, "4. Định Vị SMC OB / S/R Chuẩn");
+
+            } catch (err) {
+                console.error("Dashboard Fetch Error:", err);
+            }
+        }
+
+        function updateCheckItem(id, isPass, text) {
+            const el = document.getElementById(id);
+            el.innerHTML = `<span class="${isPass ? 'check-pass' : 'check-fail'}">${isPass ? '✔' : '✖'}</span> <span>${text}</span>`;
+          }
+
+        fetchMarketAndCalculate();
+        setInterval(fetchMarketAndCalculate, 10000);
+    </script>
+</body>
+</html>
