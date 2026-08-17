@@ -1,555 +1,731 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BTC Pro Trading Terminal - Option C Advanced Quantitative System</title>
-    <style>
-        :root {
-            --bg-dark: #0b0e14;
-            --card-bg: #151a23;
-            --card-border: #232a36;
-            --text-main: #e1e7ec;
-            --text-sub: #848e9c;
-            --green-accent: #0ecb81;
-            --red-accent: #f6465d;
-            --yellow-accent: #f0b90b;
-            --blue-accent: #1890ff;
-            --purple-accent: #a855f7;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BTC Confluence Terminal Pro - FPT & TAP Optimized Engine</title>
+<style>
+  :root{
+    --bg:#0A0C10;
+    --panel:#12151C;
+    --panel-2:#171B24;
+    --line:#232834;
+    --text:#E7EAF0;
+    --muted:#7C879B;
+    --mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, Menlo, monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --up:#33D69F;
+    --down:#F1567F;
+    --amber:#F0B429;
+    --accent:#5B8CFF;
+    --purple:#A855F7;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);}
+  body{
+    min-height:100vh;
+    padding:20px;
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(91,140,255,0.06), transparent 40%),
+      radial-gradient(circle at 85% 10%, rgba(51,214,159,0.05), transparent 40%);
+  }
+  .wrap{max-width:1080px;margin:0 auto;}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-dark); color: var(--text-main); padding: 24px; line-height: 1.5; max-width: 1250px; margin: 0 auto; }
+  header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    flex-wrap:wrap;gap:16px;
+    padding-bottom:18px;margin-bottom:20px;border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--up);box-shadow:0 0 8px var(--up);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+  .brand h1{font-size:15px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0;}
+  .price-block{text-align:right;}
+  .price-block .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;}
+  .price-block .price{font-family:var(--mono);font-size:38px;font-weight:700;line-height:1;}
+  .price-block .price.up{color:var(--up);}
+  .price-block .price.down{color:var(--down);}
+  .updated{font-size:11px;color:var(--muted);margin-top:4px;font-family:var(--mono);}
 
-        /* Header Layout */
-        .header { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 20px 28px; border-radius: 12px; border: 1px solid var(--card-border); margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-        .price-box { display: flex; align-items: baseline; gap: 14px; margin-top: 6px; }
-        .price-val { font-size: 36px; font-weight: 800; color: #fff; font-family: 'Courier New', Courier, monospace; }
-        .badge-live { background: rgba(14, 203, 129, 0.15); color: var(--green-accent); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; border: 1px solid rgba(14, 203, 129, 0.3); animation: pulse 2s infinite; }
+  .controls{display:flex;gap:10px;align-items:center;margin-bottom:22px;flex-wrap:wrap;}
+  button.refresh{
+    background:var(--accent);color:#0A0C10;border:none;border-radius:8px;
+    padding:10px 18px;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--sans);
+    transition:transform .15s ease, opacity .15s ease;
+  }
+  button.refresh:hover{opacity:.85;}
+  button.refresh:active{transform:scale(.97);}
+  button.refresh:disabled{opacity:.4;cursor:default;}
+  .auto-toggle{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);font-family:var(--mono);}
+  .auto-toggle input{accent-color:var(--accent);}
+  .status-msg{font-size:12px;color:var(--muted);font-family:var(--mono);}
 
-        /* Core Metrics Grid */
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .metric-card { background: var(--card-bg); padding: 18px; border-radius: 10px; border: 1px solid var(--card-border); text-align: center; }
-        .metric-title { font-size: 12px; color: var(--text-sub); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .metric-val { font-size: 20px; font-weight: 700; color: #fff; }
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  @media (max-width:720px){.grid{grid-template-columns:1fr;}}
 
-        /* OPTION C: RISK CALCULATOR & POSITION SIZING BAR */
-        .risk-calculator-card { background: linear-gradient(135deg, rgba(24, 144, 255, 0.1), rgba(168, 85, 247, 0.1)); border: 1px solid rgba(24, 144, 255, 0.3); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; }
-        .calc-input-group { display: flex; align-items: center; gap: 12px; }
-        .calc-input { background: #0b0e14; border: 1px solid var(--card-border); color: #fff; padding: 8px 12px; border-radius: 6px; width: 120px; font-weight: 700; font-family: monospace; font-size: 16px; }
-        .calc-results { display: flex; gap: 24px; flex-wrap: wrap; }
-        .calc-item { display: flex; flex-direction: column; }
-        .calc-label { font-size: 11px; color: var(--text-sub); text-transform: uppercase; font-weight: 700; }
-        .calc-val { font-size: 18px; font-weight: 800; font-family: monospace; color: var(--yellow-accent); }
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:18px 20px;
+  }
+  .card h2{
+    font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);
+    margin:0 0 14px 0;font-weight:700;display:flex;align-items:center;gap:8px;
+  }
 
-        /* ADVANCED INDICATORS (FVG, SWEEP, R:R, PDH/PDL, OI) */
-        .advanced-metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .adv-card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--card-border); padding: 18px; text-align: center; transition: all 0.3s ease; }
-        .adv-title { font-size: 11px; color: var(--text-sub); font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
-        .adv-val { font-size: 16px; font-weight: 800; font-family: monospace; }
-        .adv-sub { font-size: 11px; margin-top: 4px; font-weight: 600; }
-        
-        /* Status Colors */
-        .card-green-bg { background: rgba(14, 203, 129, 0.08) !important; border: 1px solid rgba(14, 203, 129, 0.3) !important; }
-        .card-red-bg { background: rgba(246, 70, 93, 0.08) !important; border: 1px solid rgba(246, 70, 93, 0.3) !important; }
-        .text-green { color: var(--green-accent) !important; }
-        .text-red { color: var(--red-accent) !important; }
+  .smc-ob-card {
+    background: var(--panel); border: 1px solid var(--purple); border-radius: 12px;
+    padding: 16px 20px; margin-bottom: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;
+  }
+  .smc-ob-title { font-size: 11px; font-weight: 700; color: var(--purple); text-transform: uppercase; letter-spacing: .08em; }
+  .smc-ob-group { display: flex; gap: 12px; flex-wrap: wrap; }
+  .smc-tag { font-family: var(--mono); font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 8px; }
+  .smc-bull { background: rgba(51, 214, 159, 0.12); color: var(--up); border: 1px solid rgba(51, 214, 159, 0.3); }
+  .smc-bear { background: rgba(241, 86, 127, 0.12); color: var(--down); border: 1px solid rgba(241, 86, 127, 0.3); }
 
-        /* SMC Container */
-        .ob-container { background: var(--card-bg); padding: 20px 24px; border-radius: 12px; border: 1px solid var(--card-border); margin-bottom: 24px; display: flex; flex-direction: column; gap: 16px; }
-        .ob-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
-        .ob-group { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-        .ob-tag { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: monospace; }
-        .ob-bull { background: rgba(14, 203, 129, 0.1); color: var(--green-accent); border: 1px solid rgba(14, 203, 129, 0.3); }
-        .ob-bear { background: rgba(246, 70, 93, 0.1); color: var(--red-accent); border: 1px solid rgba(246, 70, 93, 0.3); }
+  .rsi-value{font-family:var(--mono);font-size:32px;font-weight:700;margin-bottom:6px;}
+  .rsi-bar-track{position:relative;height:8px;border-radius:4px;background:var(--panel-2);margin:10px 0 6px 0;overflow:visible;}
+  .rsi-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--up),var(--amber),var(--down));width:100%;opacity:.25;}
+  .rsi-marker{position:absolute;top:-4px;width:3px;height:16px;background:var(--text);border-radius:2px;transform:translateX(-50%);}
+  .rsi-zones{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px;}
+  .rsi-label{font-size:13px;margin-top:8px;color:var(--muted);}
 
-        /* Main Signal Section */
-        .main-card { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--card-border); padding: 28px; position: relative; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.4); margin-bottom: 24px; }
-        .main-card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: linear-gradient(90deg, var(--blue-accent), var(--green-accent)); }
+  .trend-value{font-size:20px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+  .trend-value.up{color:var(--up);}
+  .trend-value.down{color:var(--down);}
+  .trend-value.sideways{color:var(--amber);}
+  .ema-line{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:4px;}
 
-        .strat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--card-border); }
-        .strat-title { font-size: 22px; font-weight: 800; color: #fff; }
-        .badge-side { padding: 6px 16px; border-radius: 6px; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
-        .side-long { background: var(--green-accent); color: #000; box-shadow: 0 0 12px rgba(14, 203, 129, 0.4); }
-        .side-short { background: var(--red-accent); color: #fff; box-shadow: 0 0 12px rgba(246, 70, 93, 0.4); }
+  .zones-card h2{margin-bottom:10px;}
+  .zone-list{display:flex;flex-direction:column;gap:8px;}
+  .zone-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:9px 12px;border-radius:8px;background:var(--panel-2);
+    font-family:var(--mono);font-size:13px;
+  }
+  .zone-row .tag{font-size:10px;padding:2px 8px;border-radius:20px;font-family:var(--sans);font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+  .zone-row.res .tag{background:rgba(241,86,127,.15);color:var(--down);}
+  .zone-row.sup .tag{background:rgba(51,214,159,.15);color:var(--up);}
+  .zone-row .touches{color:var(--muted);font-size:11px;}
+  .zone-row .dist{color:var(--muted);}
 
-        /* Recommendation Box */
-        .rec-box { padding: 12px 20px; border-radius: 8px; font-size: 15px; font-weight: 800; text-align: center; margin-bottom: 24px; letter-spacing: 0.5px; }
-        .rec-green { background: rgba(14, 203, 129, 0.15); color: var(--green-accent); border: 1px solid rgba(14, 203, 129, 0.4); }
-        .rec-red { background: rgba(246, 70, 93, 0.15); color: var(--red-accent); border: 1px solid rgba(246, 70, 93, 0.4); }
+  .conf-panel{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:20px;margin-bottom:16px;
+  }
+  .conf-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+  .conf-head .dir{font-size:18px;font-weight:800;letter-spacing:.02em;}
+  .conf-head .dir.buy{color:var(--up);}
+  .conf-head .dir.sell{color:var(--down);}
+  .conf-head .zone-price{font-family:var(--mono);color:var(--muted);font-size:13px;}
+  .score-badge{
+    font-family:var(--mono);font-weight:800;font-size:15px;
+    padding:6px 14px;border-radius:20px;border:1px solid var(--line);
+  }
+  .score-badge.pass{background:rgba(51,214,159,.12);color:var(--up);border-color:rgba(51,214,159,.3);}
+  .score-badge.fail{background:rgba(241,86,127,.10);color:var(--down);border-color:rgba(241,86,127,.25);}
 
-        /* DCA Trading Levels Layout */
-        .dca-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
-        .level-box { background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.05); text-align: center; }
-        .level-label { font-size: 11px; color: var(--text-sub); margin-bottom: 6px; font-weight: 700; text-transform: uppercase; }
-        .level-price { font-size: 18px; font-weight: 800; font-family: monospace; }
+  .breakdown{display:flex;flex-direction:column;gap:6px;margin:14px 0;}
+  .bd-row{display:flex;align-items:center;gap:10px;font-size:12.5px;}
+  .bd-points{font-family:var(--mono);font-weight:700;width:36px;text-align:right;flex-shrink:0;}
+  .bd-points.pos{color:var(--up);}
+  .bd-points.neg{color:var(--down);}
+  .bd-points.zero{color:var(--muted);}
+  .bd-label{color:var(--text);opacity:.85;}
 
-        /* System Inference Callout Box */
-        .inference-box { background: rgba(240, 185, 11, 0.08); border: 1px solid rgba(240, 185, 11, 0.25); border-left: 5px solid var(--yellow-accent); padding: 18px 20px; border-radius: 8px; margin-bottom: 20px; }
-        .inference-title { font-size: 12px; color: var(--yellow-accent); font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px; }
-        .inference-text { font-size: 16px; font-weight: 600; color: var(--text-main); font-style: italic; }
+  .setup-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px;}
+  @media (max-width:640px){.setup-grid{grid-template-columns:1fr 1fr;}}
+  .setup-item{background:var(--panel-2);border-radius:8px;padding:10px 12px;}
+  .setup-item .k{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px;}
+  .setup-item .v{font-family:var(--mono);font-size:14px;font-weight:700;}
+  .setup-item .rr{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;}
 
-        /* Checklist */
-        .matrix-checklist { background: rgba(255, 255, 255, 0.015); border: 1px solid var(--card-border); border-radius: 10px; padding: 20px; }
-        .matrix-title { font-size: 13px; color: var(--text-sub); font-weight: 700; text-transform: uppercase; margin-bottom: 12px; }
-        .matrix-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
-        .matrix-item { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; }
-        .check-pass { color: var(--green-accent); font-weight: 700; }
-        .check-fail { color: var(--red-accent); font-weight: 700; }
+  .disclaimer{font-size:11px;color:var(--muted);margin-top:14px;line-height:1.5;border-top:1px solid var(--line);padding-top:10px;}
+  .pa-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);}
+  .pa-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;font-weight:700;}
+  .pa-note{font-size:12px;margin-bottom:4px;color:var(--text);opacity:.85;}
 
-        /* Table */
-        .matrix-table-card { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--card-border); padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); margin-bottom: 24px; }
-        .matrix-table-title { font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-        .table-responsive { width: 100%; overflow-x: auto; }
-        .matrix-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-        .matrix-table th { background: rgba(255, 255, 255, 0.03); color: var(--text-sub); padding: 12px 14px; font-weight: 700; border-bottom: 1px solid var(--card-border); text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
-        .matrix-table td { padding: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); color: var(--text-main); vertical-align: middle; }
-        .badge-act-green { color: var(--green-accent); font-weight: 700; background: rgba(14, 203, 129, 0.1); padding: 4px 8px; border-radius: 4px; display: inline-block; border: 1px solid rgba(14, 203, 129, 0.2); }
-        .badge-act-red { color: var(--red-accent); font-weight: 700; background: rgba(246, 70, 93, 0.1); padding: 4px 8px; border-radius: 4px; display: inline-block; border: 1px solid rgba(246, 70, 93, 0.2); }
+  .skeleton{color:var(--muted);font-family:var(--mono);font-size:13px;padding:30px 0;text-align:center;}
+  .error-box{background:rgba(241,86,127,.08);border:1px solid rgba(241,86,127,.25);color:var(--down);
+    padding:14px 18px;border-radius:10px;font-size:13px;margin-bottom:16px;font-family:var(--mono);}
 
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-    </style>
+  footer{text-align:center;color:var(--muted);font-size:11px;margin-top:30px;font-family:var(--mono);}
+</style>
 </head>
 <body>
+<div class="wrap">
 
-    <!-- Header Price Bar -->
-    <div class="header">
+  <header>
+    <div class="brand">
+      <span class="dot"></span>
+      <h1>BTC Confluence Terminal Pro · FPT Optimized Engine</h1>
+    </div>
+    <div class="price-block">
+      <div class="label">Giá hiện tại</div>
+      <div class="price" id="priceValue">--</div>
+      <div class="updated" id="updatedAt">Chưa tải dữ liệu</div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <button class="refresh" id="refreshBtn">↻ Cập nhật ngay</button>
+    <label class="auto-toggle">
+      <input type="checkbox" id="autoToggle" checked />
+      Tự động làm mới mỗi 60 giây
+    </label>
+    <span class="status-msg" id="statusMsg"></span>
+  </div>
+
+  <div id="errorBox"></div>
+
+  <div id="content">
+    <div class="skeleton">Đang chạy thuật toán Confluence Score Veto System...</div>
+  </div>
+
+  <footer>Dữ liệu: Coinbase Exchange (BTC-USD), dự phòng CoinGecko · TAP Risk Managed</footer>
+</div>
+
+<script>
+const CONFIG = {
+  maxLevels: 3,
+  rsiPeriod: 14,
+  rsiOverbought: 70,
+  rsiOversold: 30,
+  emaShortPeriod: 50,
+  emaLongPeriod: 100,
+  confluenceThreshold: 7, // Nâng ngưỡng từ 6 lên 7 điểm kỷ luật hơn
+  toleranceUSD: 150 
+};
+
+function aggregateHourlyToH4(hourlyCandles) {
+  const bucketMs = 4 * 60 * 60 * 1000;
+  const buckets = new Map();
+  for (const c of hourlyCandles) {
+    const key = Math.floor(c.time / bucketMs) * bucketMs;
+    if (!buckets.has(key)) {
+      buckets.set(key, { time: key, open: c.open, high: c.high, low: c.low, close: c.close });
+    } else {
+      const b = buckets.get(key);
+      b.high = Math.max(b.high, c.high);
+      b.low = Math.min(b.low, c.low);
+      b.close = c.close;
+    }
+  }
+  return Array.from(buckets.values()).sort((a, b) => a.time - b.time);
+}
+
+async function fetchCoinbaseHourlyWindow(startISO, endISO) {
+  const url = `https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=3600&start=${startISO}&end=${endISO}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Coinbase lỗi HTTP ${res.status}`);
+  const data = await res.json();
+  return data.map(c => ({ time: c[0] * 1000, open: c[3], high: c[2], low: c[1], close: c[4] }));
+}
+
+async function fetchKlinesCoinbase() {
+  const now = new Date();
+  const start1 = new Date(now.getTime() - 300 * 3600 * 1000);
+  const start2 = new Date(now.getTime() - 600 * 3600 * 1000);
+  const [w1, w2] = await Promise.all([
+    fetchCoinbaseHourlyWindow(start1.toISOString(), now.toISOString()),
+    fetchCoinbaseHourlyWindow(start2.toISOString(), start1.toISOString()),
+  ]);
+  const seen = new Map();
+  [...w1, ...w2].forEach(c => seen.set(c.time, c));
+  const hourly = Array.from(seen.values()).sort((a, b) => a.time - b.time);
+  return aggregateHourlyToH4(hourly);
+}
+
+async function fetchKlinesCoinGecko() {
+  const url = "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30";
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`CoinGecko lỗi HTTP ${res.status}`);
+  const data = await res.json();
+  const hourly = data.prices.map(([ts, price]) => ({ time: ts, open: price, high: price, low: price, close: price }));
+  return aggregateHourlyToH4(hourly);
+}
+
+async function fetchCandles() {
+  try {
+    return await fetchKlinesCoinbase();
+  } catch (e) {
+    console.warn("Coinbase thất bại, fallback CoinGecko:", e.message);
+    return await fetchKlinesCoinGecko();
+  }
+}
+
+async function fetchLowerTimeframe(granularitySeconds) {
+  const url = `https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=${granularitySeconds}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Coinbase (LTF) lỗi HTTP ${res.status}`);
+  const data = await res.json();
+  return data.map(c => ({ time: c[0] * 1000, open: c[3], high: c[2], low: c[1], close: c[4] })).sort((a,b)=>a.time-b.time);
+}
+async function fetchH1Candles(){ return fetchLowerTimeframe(3600); }
+async function fetchM15Candles(){ return fetchLowerTimeframe(900); }
+
+function detectPriceAction(candles) {
+  if (!candles || candles.length < 2) return { patterns: [] };
+  const c = candles[candles.length - 1];
+  const prev = candles[candles.length - 2];
+  const body = Math.abs(c.close - c.open);
+  const range = c.high - c.low || 1e-9;
+  const upperWick = c.high - Math.max(c.open, c.close);
+  const lowerWick = Math.min(c.open, c.close) - c.low;
+  const bodyRatio = body / range;
+  const isBullishCandle = c.close > c.open;
+  const patterns = [];
+
+  if (lowerWick >= body * 2 && upperWick <= body * 0.6 && bodyRatio < 0.4) {
+    patterns.push({ type: "bullish", label: "Pin bar tăng — từ chối giá xuống" });
+  }
+  if (upperWick >= body * 2 && lowerWick <= body * 0.6 && bodyRatio < 0.4) {
+    patterns.push({ type: "bearish", label: "Pin bar giảm — từ chối giá lên" });
+  }
+  if (bodyRatio < 0.1) patterns.push({ type: "neutral", label: "Doji — thị trường lưỡng lự" });
+  
+  const prevBullish = prev.close > prev.open;
+  if (!prevBullish && isBullishCandle && c.open <= prev.close && c.close >= prev.open) {
+    patterns.push({ type: "bullish", label: "Nến nhấn chìm tăng (Bullish Engulfing)" });
+  }
+  if (prevBullish && !isBullishCandle && c.open >= prev.close && c.close <= prev.open) {
+    patterns.push({ type: "bearish", label: "Nến nhấn chìm giảm (Bearish Engulfing)" });
+  }
+  return { patterns };
+}
+
+function summarizePriceAction(direction, h1PA, m15PA) {
+  const wantType = direction === "BUY" ? "bullish" : "bearish";
+  const againstType = direction === "BUY" ? "bearish" : "bullish";
+  const notes = [];
+  let confirmCount = 0, againstCount = 0;
+
+  [{ label: "H1", pa: h1PA }, { label: "M15", pa: m15PA }].forEach(({ label, pa }) => {
+    if (!pa || !pa.patterns || pa.patterns.length === 0) {
+      notes.push(`${label}: Chưa phát hiện mẫu hình rõ ràng.`);
+      return;
+    }
+    const matched = pa.patterns.filter(p => p.type === wantType);
+    const opposed = pa.patterns.filter(p => p.type === againstType);
+    if (matched.length > 0) {
+      confirmCount++;
+      notes.push(`✅ ${label}: ${matched.map(p=>p.label).join(", ")}`);
+    } else if (opposed.length > 0) {
+      againstCount++;
+      notes.push(`🚫 ${label}: ${opposed.map(p=>p.label).join(", ")} (Cảnh báo ngược hướng)`);
+    } else {
+      notes.push(`${label}: ${pa.patterns.map(p=>p.label).join(", ")} (trung tính)`);
+    }
+  });
+  return { confirmCount, againstCount, notes };
+}
+
+function detectSupportResistanceAndOB(candles) {
+  const highs = candles.map(c => c.high);
+  const lows = candles.map(c => c.low);
+  const closes = candles.map(c => c.close);
+  const currentPrice = closes[closes.length - 1];
+  const len = candles.length;
+
+  let trs = [];
+  for (let i = 1; i < len; i++) trs.push(Math.max(highs[i] - lows[i], Math.abs(highs[i] - closes[i-1]), Math.abs(lows[i] - closes[i-1])));
+  const atr = trs.slice(-14).reduce((a, b) => a + b, 0) / Math.min(14, trs.length);
+
+  const rawHighs = [], rawLows = [];
+  for (let i = 2; i < len - 2; i++) {
+    if (highs[i] >= highs[i-1] && highs[i] >= highs[i-2] && highs[i] >= highs[i+1] && highs[i] >= highs[i+2]) rawHighs.push(highs[i]);
+    if (lows[i] <= lows[i-1] && lows[i] <= lows[i-2] && lows[i] <= lows[i+1] && lows[i] <= lows[i+2]) rawLows.push(lows[i]);
+  }
+
+  function clusterWithTouches(arr) {
+    const rez = [];
+    arr.forEach(p => {
+      const match = rez.find(c => Math.abs(c.price - p) <= CONFIG.toleranceUSD);
+      if (match) {
+        match.price = (match.price * match.touches + p) / (match.touches + 1);
+        match.touches++;
+      } else {
+        rez.push({ price: p, touches: 1 });
+      }
+    });
+    return rez;
+  }
+
+  const allSup = clusterWithTouches(rawLows).filter(c => c.price < currentPrice).sort((a,b)=>b.price-a.price);
+  const allRes = clusterWithTouches(rawHighs).filter(c => c.price > currentPrice).sort((a,b)=>a.price-b.price);
+
+  // SMC Order Blocks + Dynamic Mitigation Check
+  let bullishOB = null, bearishOB = null;
+  for (let i = len - 2; i > Math.max(2, len - 35); i--) {
+    const c = candles[i];
+    if (c.close < c.open && !bullishOB && closes[i+1] > c.high) {
+      bullishOB = { top: Math.min(c.open, c.high), bottom: c.low, price: c.low, touches: 0 };
+    }
+    if (c.close > c.open && !bearishOB && closes[i+1] < c.low) {
+      bearishOB = { top: c.high, bottom: Math.max(c.open, c.close), price: c.high, touches: 0 };
+    }
+  }
+
+  // Đếm số lần giá đã chạm vào OB để xác định OB còn tươi hay không
+  candles.slice(-15).forEach(c => {
+    if (bullishOB && c.low <= bullishOB.top && c.low >= bullishOB.bottom) bullishOB.touches++;
+    if (bearishOB && c.high >= bearishOB.bottom && c.high <= bearishOB.top) bearishOB.touches++;
+  });
+
+  return { currentPrice, atr, supports: allSup.slice(0, CONFIG.maxLevels), resistances: allRes.slice(0, CONFIG.maxLevels), bullishOB, bearishOB };
+}
+
+function calculateRSI(candles, period = 14) {
+  const closes = candles.map(c => c.close);
+  if (closes.length < period + 1) return null;
+
+  let gains = 0, losses = 0;
+  for (let i = 1; i <= period; i++) {
+    const diff = closes[i] - closes[i-1];
+    if (diff >= 0) gains += diff; else losses -= diff;
+  }
+  let avgGain = gains / period;
+  let avgLoss = losses / period;
+
+  for (let i = period + 1; i < closes.length; i++) {
+    const diff = closes[i] - closes[i-1];
+    const gain = diff >= 0 ? diff : 0;
+    const loss = diff < 0 ? -diff : 0;
+    avgGain = (avgGain * (period - 1) + gain) / period;
+    avgLoss = (avgLoss * (period - 1) + loss) / period;
+  }
+
+  if (avgLoss === 0) return 100;
+  const rs = avgGain / avgLoss;
+  return 100 - (100 / (1 + rs));
+}
+
+function calculateEMASeries(closes, period) {
+  if (closes.length < period) return [];
+  const k = 2 / (period + 1);
+  const ema = [];
+  let sma = 0;
+  for (let i = 0; i < period; i++) sma += closes[i];
+  sma /= period;
+  ema[period - 1] = sma;
+  for (let i = period; i < closes.length; i++) ema[i] = closes[i] * k + ema[i-1] * (1 - k);
+  return ema;
+}
+
+function detectTrend(candles, shortPeriod, longPeriod) {
+  const closes = candles.map(c => c.close);
+  if (closes.length < longPeriod + 5) return { trend: "unknown", emaShort: null, emaLong: null };
+  const emaShortSeries = calculateEMASeries(closes, shortPeriod);
+  const emaLongSeries = calculateEMASeries(closes, longPeriod);
+  const lastIdx = closes.length - 1;
+  const emaShort = emaShortSeries[lastIdx], emaLong = emaLongSeries[lastIdx], price = closes[lastIdx];
+  if (emaShort === undefined || emaLong === undefined) return { trend: "unknown", emaShort: null, emaLong: null };
+  let trend;
+  if (price > emaShort && emaShort > emaLong) trend = "up";
+  else if (price < emaShort && emaShort < emaLong) trend = "down";
+  else trend = "sideways";
+  return { trend, emaShort, emaLong };
+}
+
+// 🔥 PHẪU THUẬT MA TRẬN CONFLUENCE SCORE: THÊM VETO SYSTEM (ĐIỂM PHỦ QUYẾT)
+function computeConfluenceScore(direction, level, rsi, trendInfo, bestRR, paSummary, config, isOB, obData) {
+  const breakdown = [];
+  let score = 0;
+  const isBuy = direction === "BUY";
+
+  let rsiPoints = 0;
+  if (rsi === null) {
+    breakdown.push({ label: "RSI: Không có dữ liệu", points: 0 });
+  } else if ((isBuy && rsi <= config.rsiOversold) || (!isBuy && rsi >= config.rsiOverbought)) {
+    rsiPoints = 3; breakdown.push({ label: `RSI ${rsi.toFixed(1)} — vùng Cực Trị ủng hộ ${direction}`, points: 3 });
+  } else if ((isBuy && rsi <= 45) || (!isBuy && rsi >= 55)) {
+    rsiPoints = 2; breakdown.push({ label: `RSI ${rsi.toFixed(1)} — nghiêng nhẹ ủng hộ ${direction}`, points: 2 });
+  } else if ((isBuy && rsi <= 55) || (!isBuy && rsi >= 45)) {
+    rsiPoints = 1; breakdown.push({ label: `RSI ${rsi.toFixed(1)} — Trung tính`, points: 1 });
+  } else {
+    rsiPoints = -3; breakdown.push({ label: `RSI ${rsi.toFixed(1)} — NGƯỢC hướng ${direction}`, points: -3 });
+  }
+  score += rsiPoints;
+
+  let zonePoints = 0;
+  if (level.touches >= 4) zonePoints = 2; else if (level.touches >= 2) zonePoints = 1;
+  breakdown.push({ label: `Vùng Cản đã test ${level.touches} lần`, points: zonePoints });
+  score += zonePoints;
+
+  // ĐỒNG THUẬN OB CÓ KIỂM TRA ĐỘ TƯƠI (MITIGATION)
+  if (isOB) {
+    if (obData && obData.touches > 2) {
+      breakdown.push({ label: "Trùng SMC OB H4 nhưng đã bị Retest >2 lần (Yếu)", points: 0 });
+    } else {
+      score += 2;
+      breakdown.push({ label: "Trùng khớp SMC OB H4 còn tươi (Cá Voi)", points: 2 });
+    }
+  }
+
+  let trendPoints = 0;
+  const trendTxt = trendInfo.trend === "up" ? "Xu hướng TĂNG" : trendInfo.trend === "down" ? "Xu hướng GIẢM" : trendInfo.trend === "sideways" ? "Đi ngang" : "Chưa rõ";
+  if (trendInfo.trend === "unknown") {
+    breakdown.push({ label: "Xu hướng: Chưa đủ dữ liệu", points: 0 });
+  } else if ((isBuy && trendInfo.trend === "up") || (!isBuy && trendInfo.trend === "down")) {
+    trendPoints = 2; breakdown.push({ label: `${trendTxt} — thuận hướng ${direction}`, points: 2 });
+  } else if (trendInfo.trend === "sideways") {
+    breakdown.push({ label: trendTxt, points: 0 });
+  } else {
+    trendPoints = -2; breakdown.push({ label: `${trendTxt} — NGƯỢC hướng ${direction}`, points: -2 });
+  }
+  score += trendPoints;
+
+  let rrPoints = 0;
+  if (bestRR === null) {
+    breakdown.push({ label: "R:R: Không có đối ứng", points: 0 });
+  } else if (bestRR >= 2) {
+    rrPoints = 2; breakdown.push({ label: `R:R ước tính 1:${bestRR.toFixed(2)} — hấp dẫn`, points: 2 });
+  } else if (bestRR >= 1) {
+    rrPoints = 1; breakdown.push({ label: `R:R ước tính 1:${bestRR.toFixed(2)} — tạm ổn`, points: 1 });
+  } else {
+    rrPoints = -1; breakdown.push({ label: `R:R ước tính 1:${bestRR.toFixed(2)} — kém hấp dẫn`, points: -1 });
+  }
+  score += rrPoints;
+
+  // 🔥 TAP VETO SYSTEM: NẾU PA KHUNG NHỎ NGƯỢC HƯỚNG TRỪ NẶNG 4 ĐIỂM
+  let paPoints = 0;
+  if (paSummary) {
+    if (paSummary.againstCount >= 1) {
+      paPoints = -4; // Điểm phủ quyết
+      breakdown.push({ label: `🚨 VETO: Nến H1/M15 có ${paSummary.againstCount} khung ngược hướng (Xung đột)`, points: -4 });
+    } else if (paSummary.confirmCount >= 2) {
+      paPoints = 3;
+      breakdown.push({ label: `Price action H1 & M15 Đồng thuận tuyệt đối`, points: 3 });
+    } else if (paSummary.confirmCount === 1) {
+      paPoints = 2;
+      breakdown.push({ label: `Price action 1 khung xác nhận đồng thuận`, points: 2 });
+    }
+  }
+  score += paPoints;
+
+  return { score, breakdown };
+}
+
+function buildTargets(direction, level, currentPrice, supports, resistances, atr) {
+  const isSell = direction === "SELL";
+  const slBufferUSD = Math.max(250, atr * 0.8);
+  const entryPrice = level.price;
+  const slPrice = isSell ? entryPrice + slBufferUSD : entryPrice - slBufferUSD;
+  const riskAmount = Math.abs(slPrice - entryPrice);
+
+  const oppositeLevels = isSell ? supports : resistances;
+  const targets = oppositeLevels.slice(0, 2).map(lv => {
+    const rewardAmount = Math.abs(lv.price - entryPrice);
+    const rr = riskAmount > 0 ? rewardAmount / riskAmount : null;
+    return { price: lv.price, rr };
+  });
+  const bestRR = targets.length > 0 ? targets[targets.length - 1].rr : null;
+  return { slPrice, targets, bestRR, entryPrice };
+}
+
+const fmt = n => n ? Math.round(n).toLocaleString('en-US') : '--';
+const fmt2 = n => n ? n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '--';
+
+function renderRSI(rsi) {
+  if (rsi === null) return `<div class="skeleton">Không đủ dữ liệu</div>`;
+  const pos = Math.min(Math.max(rsi, 0), 100);
+  let label = 'Trung tính', color = 'var(--text)';
+  if (rsi >= CONFIG.rsiOverbought) { label = '⚠️ Quá mua'; color = 'var(--down)'; }
+  else if (rsi <= CONFIG.rsiOversold) { label = '⚠️ Quá bán'; color = 'var(--up)'; }
+  return `
+    <div class="rsi-value" style="color:${color}">${rsi.toFixed(1)}</div>
+    <div class="rsi-bar-track">
+      <div class="rsi-bar-fill"></div>
+      <div class="rsi-marker" style="left:${pos}%"></div>
+    </div>
+    <div class="rsi-zones"><span>0 Oversold</span><span>50</span><span>Overbought 100</span></div>
+    <div class="rsi-label" style="color:${color}">${label}</div>
+  `;
+}
+
+function renderTrend(trendInfo) {
+  const map = {
+    up: { txt: '📈 TĂNG', cls: 'up' },
+    down: { txt: '📉 GIẢM', cls: 'down' },
+    sideways: { txt: '➡️ ĐI NGANG', cls: 'sideways' },
+    unknown: { txt: 'Không đủ dữ liệu', cls: '' },
+  };
+  const t = map[trendInfo.trend];
+  const emaLine = trendInfo.emaShort
+    ? `EMA${CONFIG.emaShortPeriod}: $${fmt(trendInfo.emaShort)} &nbsp;|&nbsp; EMA${CONFIG.emaLongPeriod}: $${fmt(trendInfo.emaLong)}`
+    : '';
+  return `<div class="trend-value ${t.cls}">${t.txt}</div><div class="ema-line">${emaLine}</div>`;
+}
+
+function renderSMCOBHeader(bullishOB, bearishOB) {
+  const bullStr = bullishOB ? `$${fmt(bullishOB.bottom)} - $${fmt(bullishOB.top)}` : "Chưa tạo";
+  const bearStr = bearishOB ? `$${fmt(bearishOB.bottom)} - $${fmt(bearishOB.top)}` : "Chưa tạo";
+  return `
+    <div class="smc-ob-card">
+      <span class="smc-ob-title">📊 VÙNG THÔNG SỐ CƠ BẢN SMC ORDER BLOCK (H4):</span>
+      <div class="smc-ob-group">
+        <div class="smc-tag smc-bull">Bullish OB: ${bullStr}</div>
+        <div class="smc-tag smc-bear">Bearish OB: ${bearStr}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderZones(supports, resistances, currentPrice) {
+  const rows = [];
+  resistances.slice().reverse().forEach(r => {
+    const dist = ((r.price - currentPrice) / currentPrice * 100).toFixed(2);
+    rows.push(`<div class="zone-row res"><span class="tag">Kháng cự</span><span>$${fmt(r.price)}</span><span class="touches">${r.touches} lần chạm</span><span class="dist">+${dist}%</span></div>`);
+  });
+  supports.forEach(s => {
+    const dist = ((currentPrice - s.price) / currentPrice * 100).toFixed(2);
+    rows.push(`<div class="zone-row sup"><span class="tag">Hỗ trợ</span><span>$${fmt(s.price)}</span><span class="touches">${s.touches} lần chạm</span><span class="dist">-${dist}%</span></div>`);
+  });
+  return rows.length ? `<div class="zone-list">${rows.join('')}</div>` : `<div class="skeleton">Chưa xác định được vùng</div>`;
+}
+
+function renderBreakdownRow(b) {
+  const cls = b.points > 0 ? 'pos' : b.points < 0 ? 'neg' : 'zero';
+  const sign = b.points > 0 ? '+' : '';
+  return `<div class="bd-row"><span class="bd-points ${cls}">${sign}${b.points}</span><span class="bd-label">${b.label}</span></div>`;
+}
+
+function renderConfluencePanel(direction, level, currentPrice, score, breakdown, targets, slPrice, paSummary, entryPrice) {
+  const isBuy = direction === 'BUY';
+  const dirLabel = isBuy ? 'BUY (tại Hỗ trợ)' : 'SELL (tại Kháng cự)';
+  const passed = score >= CONFIG.confluenceThreshold;
+  const badgeCls = passed ? 'pass' : 'fail';
+  const badgeTxt = passed ? `ĐẠT NGƯỠNG (${score}/14)` : `CHƯA ĐẠT (${score}/14)`;
+
+  const targetsHtml = targets.length > 0
+    ? targets.map((t, idx) => `
+      <div class="setup-item">
+        <div class="k">${idx === 0 ? 'TP1 (gần)' : 'TP2 (xa hơn)'}</div>
+        <div class="v">$${fmt(t.price)}</div>
+        <div class="rr">R:R ${t.rr !== null ? '1:' + t.rr.toFixed(2) : 'N/A'}</div>
+      </div>`).join('')
+    : `<div class="setup-item"><div class="k">TP</div><div class="v">N/A</div></div>`;
+
+  const paHtml = paSummary
+    ? `<div class="pa-section"><div class="pa-title">Price action H1 / M15 Smart Fetch Dynamic</div>${paSummary.notes.map(n => `<div class="pa-note">${n}</div>`).join('')}</div>`
+    : `<div class="pa-section"><div class="pa-title">Price action H1 / M15</div><div class="pa-note">Chưa kích hoạt Smart Fetch (Giá nằm ngoài biên ATR $1.5x)</div></div>`;
+
+  return `
+    <div class="conf-panel">
+      <div class="conf-head">
         <div>
-            <div style="font-size: 13px; color: var(--text-sub); font-weight: 600;">PAIRS: BTC/USDT (Method Old - SMC Order Block & Option C Engine)</div>
-            <div class="price-box">
-                <span class="price-val" id="btc-price">Loading...</span>
-                <span class="badge-live">● REALTIME CONNECTED</span>
-            </div>
+          <div class="dir ${isBuy ? 'buy' : 'sell'}">${dirLabel}</div>
+          <div class="zone-price">Vùng Entry Kỳ Vọng: $${fmt(entryPrice)} · ${level.touches} lần chạm · cách ${(Math.abs(currentPrice-level.price)/level.price*100).toFixed(2)}%</div>
         </div>
-        <div style="text-align: right;">
-            <div style="font-size: 12px; color: var(--text-sub);">Last Check</div>
-            <div id="update-time" style="font-weight: 700; font-family: monospace; font-size: 15px;">--:--:--</div>
-        </div>
+        <div class="score-badge ${badgeCls}">${badgeTxt}</div>
+      </div>
+      <div class="breakdown">${breakdown.map(renderBreakdownRow).join('')}</div>
+      <div class="setup-grid">
+        <div class="setup-item"><div class="k">Entry Kỳ Vọng</div><div class="v">$${fmt(entryPrice)}</div></div>
+        <div class="setup-item"><div class="k">Stop Loss (ATR)</div><div class="v">$${fmt(slPrice)}</div></div>
+        ${targetsHtml}
+      </div>
+      ${paHtml}
+      <div class="disclaimer">*Gợi ý kỹ thuật tự động theo mô hình TAP/FPT Risk Manager.</div>
     </div>
+  `;
+}
 
-    <!-- Core Metrics Grid -->
-    <div class="metrics-grid">
-        <div class="metric-card"><div class="metric-title">RSI (14 - H4)</div><div class="metric-val" id="rsi-val">--</div></div>
-        <div class="metric-card"><div class="metric-title">ATR Volatility (14)</div><div class="metric-val" id="atr-val">--</div></div>
-        <div class="metric-card"><div class="metric-title">EMA 50 (H4 Trend)</div><div class="metric-val" id="ema50-val">--</div></div>
-        <div class="metric-card"><div class="metric-title">Xu Hướng H4</div><div class="metric-val" id="trend-val">--</div></div>
-    </div>
+let autoTimer = null;
 
-    <!-- OPTION C: DYNAMIC POSITION & RISK CALCULATOR -->
-    <div class="risk-calculator-card">
-        <div class="calc-input-group">
-            <span style="font-size: 13px; font-weight: 800; color: #fff;">💼 QUẢN TRỊ VỐN TỰ ĐỘNG:</span>
-            <span style="font-size: 12px; color: var(--text-sub);">Nhập Vốn (USD):</span>
-            <input type="number" id="capital-input" class="calc-input" value="1000" onchange="fetchMarketAndCalculate()">
-            <span style="font-size: 12px; color: var(--text-sub);">Risk/Kèo: <b>1.0%</b></span>
-        </div>
-        <div class="calc-results">
-            <div class="calc-item"><span class="calc-label">Tối Đa Lỗ (Max Risk)</span><span class="calc-val" id="risk-usd" style="color: var(--red-accent);">$10.0</span></div>
-            <div class="calc-item"><span class="calc-label">Khối Lượng Lệnh 1 (40%)</span><span class="calc-val" id="vol-entry1">$0.00</span></div>
-            <div class="calc-item"><span class="calc-label">Khối Lượng Lệnh 2 (60%)</span><span class="calc-val" id="vol-entry2">$0.00</span></div>
-            <div class="calc-item"><span class="calc-label">Đòn Bẩy Đề Xuất</span><span class="calc-val" id="suggested-lev" style="color: var(--purple-accent);">--</span></div>
-        </div>
-    </div>
+async function loadDashboard() {
+  const btn = document.getElementById('refreshBtn');
+  const statusMsg = document.getElementById('statusMsg');
+  const errorBox = document.getElementById('errorBox');
+  btn.disabled = true;
+  statusMsg.textContent = 'Đang tải dữ liệu H4...';
+  errorBox.innerHTML = '';
 
-    <!-- OPTION C: 4 ADVANCED INDICATORS (FVG, SWEEP, R:R, PDH/PDL) -->
-    <div class="advanced-metrics-grid">
-        <div class="adv-card" id="card-fvg">
-            <div class="adv-title">1. Khoảng Trống FVG H4</div>
-            <div class="adv-val" id="val-fvg">Loading...</div>
-            <div class="adv-sub" id="sub-fvg">Đang quét vị trí lệnh...</div>
-        </div>
-        <div class="adv-card" id="card-sweep">
-            <div class="adv-title">2. Quét Thanh Khoản (Sweep)</div>
-            <div class="adv-val" id="val-sweep">Loading...</div>
-            <div class="adv-sub" id="sub-sweep">Đang soi râu nến...</div>
-        </div>
-        <div class="adv-card" id="card-pdh">
-            <div class="adv-title">3. Bẫy Đỉnh/Đáy Cũ (PDH/PDL)</div>
-            <div class="adv-val" id="val-pdh">Loading...</div>
-            <div class="adv-sub" id="sub-pdh">Đang tính cản Ngày...</div>
-        </div>
-        <div class="adv-card" id="card-rr">
-            <div class="adv-title">4. Tỷ Lệ Risk : Reward (TP1)</div>
-            <div class="adv-val" id="val-rr">Loading...</div>
-            <div class="adv-sub" id="sub-rr">Đang tính tỉ lệ R:R...</div>
-        </div>
-    </div>
+  try {
+    const candles = await fetchCandles();
+    const { currentPrice, atr, supports, resistances, bullishOB, bearishOB } = detectSupportResistanceAndOB(candles);
+    const rsi = calculateRSI(candles, CONFIG.rsiPeriod);
+    const trendInfo = detectTrend(candles, CONFIG.emaShortPeriod, CONFIG.emaLongPeriod);
 
-    <!-- SMC Order Blocks & Cluster Resistance / Support Container -->
-    <div class="ob-container">
-        <div class="ob-row">
-            <span style="font-size: 13px; font-weight: 700; color: var(--text-sub);">VÙNG KHỐI TÍCH LŨY SMC ORDER BLOCK (H4):</span>
-            <div class="ob-group">
-                <div class="ob-tag ob-bull" id="bull-ob">Bullish OB: Loading...</div>
-                <div class="ob-tag ob-bear" id="bear-ob">Bearish OB: Loading...</div>
-            </div>
-        </div>
+    // 🔥 SMART FETCH THEO ATR ĐỘNG: CHỈ FETCH KHI KHOẢNG CÁCH <= 1.5 * ATR
+    const nearestSup = supports[0] ? supports[0].price : 0;
+    const nearestRes = resistances[0] ? resistances[0].price : 999999;
+    const distUSD = Math.min(Math.abs(currentPrice - nearestSup), Math.abs(currentPrice - nearestRes));
+    const triggerThreshold = atr * 1.5;
 
-        <hr style="border: none; border-top: 1px solid var(--card-border);">
+    let h1Candles = null, m15Candles = null;
+    if (distUSD <= triggerThreshold) {
+      statusMsg.textContent = `Giá tiệm cận cản (Cách $${Math.round(distUSD)} <= 1.5x ATR)! Bật Smart Fetch H1/M15...`;
+      try {
+        [h1Candles, m15Candles] = await Promise.all([fetchH1Candles(), fetchM15Candles()]);
+      } catch (e) {
+        console.warn('Không lấy được H1/M15:', e.message);
+      }
+    } else {
+      statusMsg.textContent = `Giá xa cản (Cách $${Math.round(distUSD)} > 1.5x ATR), tạm dừng H1/M15...`;
+    }
 
-        <div class="ob-row">
-            <span style="font-size: 13px; font-weight: 700; color: var(--text-sub);">CỤM CẢN & SỐ LẦN CHẠM (CLUSTER TOUCHES):</span>
-            <div class="ob-group">
-                <div class="ob-tag ob-bear" id="res-touch-1">Kháng Cự 1: Loading...</div>
-                <div class="ob-tag ob-bear" id="res-touch-2">Kháng Cự 2: Loading...</div>
-                <div class="ob-tag ob-bull" id="sup-touch-1">Hỗ Trợ 1: Loading...</div>
-            </div>
-        </div>
-    </div>
+    const priceEl = document.getElementById('priceValue');
+    const prevPrice = parseFloat(priceEl.dataset.raw || currentPrice);
+    priceEl.textContent = '$' + fmt2(currentPrice);
+    priceEl.dataset.raw = currentPrice;
+    priceEl.className = 'price ' + (currentPrice >= prevPrice ? 'up' : 'down');
+    document.getElementById('updatedAt').textContent = 'Cập nhật: ' + new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 
-    <!-- MAIN METHOD_OLD SIGNAL CARD -->
-    <div class="main-card">
-        <div class="strat-header">
-            <div>
-                <div class="strat-title">CHỈ BÁO CHIẾN LƯỢC: METHOD_OLD (OPTION C FULL)</div>
-                <div style="font-size: 12px; color: var(--text-sub); margin-top: 2px;">Cơ chế: Retest SMC OB + DCA 2 Tầng + Dynamic Sizing & Sweep Engine</div>
-            </div>
-            <span class="badge-side" id="old-side">--</span>
-        </div>
+    let html = '';
+    html += renderSMCOBHeader(bullishOB, bearishOB);
+    html += '<div class="grid">';
+    html += `<div class="card"><h2>RSI (${CONFIG.rsiPeriod}, H4)</h2>${renderRSI(rsi)}</div>`;
+    html += `<div class="card"><h2>Xu hướng chính (H4)</h2>${renderTrend(trendInfo)}</div>`;
+    html += '</div>';
+    html += `<div class="card zones-card" style="margin-bottom:16px;"><h2>Vùng hỗ trợ / kháng cự (H4)</h2>${renderZones(supports, resistances, currentPrice)}</div>`;
 
-        <div class="rec-box" id="old-rec">Đang phân tích Ma Trận Quyết Định 4 Tầng...</div>
+    if (supports.length > 0) {
+      const level = supports[0];
+      const direction = 'BUY';
+      const isOB = bullishOB && Math.abs(level.price - bullishOB.price) <= CONFIG.toleranceUSD;
+      const h1PA = h1Candles ? detectPriceAction(h1Candles) : null;
+      const m15PA = m15Candles ? detectPriceAction(m15Candles) : null;
+      const paSummary = (h1PA || m15PA) ? summarizePriceAction(direction, h1PA, m15PA) : null;
+      const { slPrice, targets, bestRR, entryPrice } = buildTargets(direction, level, currentPrice, supports, resistances, atr);
+      const { score, breakdown } = computeConfluenceScore(direction, level, rsi, trendInfo, bestRR, paSummary, CONFIG, isOB, bullishOB);
+      html += renderConfluencePanel(direction, level, currentPrice, score, breakdown, targets, slPrice, paSummary, entryPrice);
+    }
+    if (resistances.length > 0) {
+      const level = resistances[0];
+      const direction = 'SELL';
+      const isOB = bearishOB && Math.abs(level.price - bearishOB.price) <= CONFIG.toleranceUSD;
+      const h1PA = h1Candles ? detectPriceAction(h1Candles) : null;
+      const m15PA = m15Candles ? detectPriceAction(m15Candles) : null;
+      const paSummary = (h1PA || m15PA) ? summarizePriceAction(direction, h1PA, m15PA) : null;
+      const { slPrice, targets, bestRR, entryPrice } = buildTargets(direction, level, currentPrice, supports, resistances, atr);
+      const { score, breakdown } = computeConfluenceScore(direction, level, rsi, trendInfo, bestRR, paSummary, CONFIG, isOB, bearishOB);
+      html += renderConfluencePanel(direction, level, currentPrice, score, breakdown, targets, slPrice, paSummary, entryPrice);
+    }
 
-        <div class="inference-box">
-            <div class="inference-title">💡 SUY LUẬN TỪ HỆ THỐNG (MARKET PSYCHOLOGY):</div>
-            <div class="inference-text" id="inference-text">"Đang phán đoán cấu trúc gom/xả của Cá Voi..."</div>
-        </div>
+    document.getElementById('content').innerHTML = html;
+    statusMsg.textContent = 'Đã cập nhật xong.';
+  } catch (err) {
+    console.error(err);
+    errorBox.innerHTML = `<div class="error-box">Lỗi tải dữ liệu: ${err.message}.</div>`;
+    statusMsg.textContent = 'Có lỗi xảy ra.';
+  } finally {
+    btn.disabled = false;
+  }
+}
 
-        <!-- DCA Trading Levels Grid -->
-        <div class="dca-grid">
-            <div class="level-box"><div class="level-label">Lệnh 1 (40% Vol)</div><div class="level-price" id="entry-1" style="color: #fff;">--</div></div>
-            <div class="level-box"><div class="level-label">Lệnh 2 (60% Vol)</div><div class="level-price" id="entry-2" style="color: #fff;">--</div></div>
-            <div class="level-box"><div class="level-label">Entry Trung Bình</div><div class="level-price" id="entry-avg" style="color: var(--yellow-accent);">--</div></div>
-            <div class="level-box"><div class="level-label">SL Chống Quét Láo</div><div class="level-price" id="old-sl" style="color: var(--red-accent);">--</div></div>
-            <div class="level-box"><div class="level-label">TP1 (Chốt 50%)</div><div class="level-price" id="old-tp1" style="color: var(--green-accent);">--</div></div>
-            <div class="level-box"><div class="level-label">TP2 (Gồng 50%)</div><div class="level-price" id="old-tp2" style="color: var(--green-accent);">--</div></div>
-        </div>
+function setupAutoRefresh() {
+  const toggle = document.getElementById('autoToggle');
+  if (autoTimer) clearInterval(autoTimer);
+  if (toggle.checked) {
+    autoTimer = setInterval(loadDashboard, 60000);
+  }
+}
 
-        <!-- Checklist -->
-        <div class="matrix-checklist">
-            <div class="matrix-title">📌 BẢNG CHECKLIST MA TRẬN QUYẾT ĐỊNH (FPT DECISION MATRIX):</div>
-            <div class="matrix-items">
-                <div class="matrix-item" id="check-trend"><span class="check-pass">✔</span> <span>1. Thuận Xu Hướng EMA50 H4</span></div>
-                <div class="matrix-item" id="check-room"><span class="check-pass">✔</span> <span>2. Khoảng Trống TP1 Trống Cản</span></div>
-                <div class="matrix-item" id="check-atr"><span class="check-pass">✔</span> <span>3. Biên Độ ATR ≥ $250</span></div>
-                <div class="matrix-item" id="check-ob"><span class="check-pass">✔</span> <span>4. Định Vị SMC OB / S/R</span></div>
-            </div>
-        </div>
-    </div>
+document.getElementById('refreshBtn').addEventListener('click', loadDashboard);
+document.getElementById('autoToggle').addEventListener('change', setupAutoRefresh);
 
-    <!-- BẢNG MA TRẬN SUY LUẬN & HÀNH ĐỘNG CỦA BOT -->
-    <div class="matrix-table-card">
-        <div class="matrix-table-title">📊 MA TRẬN SUY LUẬN & HÀNH ĐỘNG CỦA BOT</div>
-        <div class="table-responsive">
-            <table class="matrix-table">
-                <thead>
-                    <tr>
-                        <th>Hỗ trợ / Kháng cự</th>
-                        <th>Khối Order Block (OB)</th>
-                        <th>Trạng Thái RSI</th>
-                        <th>SUY LUẬN TỪ HỆ THỐNG</th>
-                        <th>HÀNH ĐỘNG CỦA BOT</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><b>Chạm Hỗ Trợ</b></td>
-                        <td>Chạm Bullish OB</td>
-                        <td>RSI &lt; 35 (Phân kỳ Dương)</td>
-                        <td><b>Phe Bán kiệt sức + Cá Voi gom hàng</b></td>
-                        <td><span class="badge-act-green">🟢 ĐỀ NGHỊ LONG (Win-rate Rất Cao)</span></td>
-                    </tr>
-                    <tr>
-                        <td><b>Thủng Hỗ Trợ</b></td>
-                        <td>Rút râu khỏi Bullish OB</td>
-                        <td>RSI giật ngược từ Quá Bán</td>
-                        <td><b>Cá Voi vừa quét râu SL Retail</b></td>
-                        <td><span class="badge-act-green">🟢 ĐỀ NGHỊ LONG (Tab A Sweep)</span></td>
-                    </tr>
-                    <tr>
-                        <td><b>Chạm Kháng Cự</b></td>
-                        <td>Chạm Bearish OB</td>
-                        <td>RSI &gt; 65 + Trend H4 Tăng</td>
-                        <td><b>Động lượng Mua quá mạnh, dễ lủng Cản</b></td>
-                        <td><span class="badge-act-red">🔴 KHÔNG ĐỀ NGHỊ SHORT (Tránh Bẫy)</span></td>
-                    </tr>
-                    <tr>
-                        <td><b>Chạm Kháng Cự</b></td>
-                        <td>Chạm Bearish OB</td>
-                        <td>RSI &gt; 70 (Phân kỳ Âm)</td>
-                        <td><b>Phe Mua kiệt sức + Cá Voi xả hàng</b></td>
-                        <td><span class="badge-act-green">🟢 ĐỀ NGHỊ SHORT</span></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Script Engine Realtime Option C -->
-    <script>
-        const formatUSD = (val) => (val && !isNaN(val)) ? '$' + Math.round(val).toLocaleString() : '--';
-
-        async function fetchMarketAndCalculate() {
-            try {
-                let currentPrice = null;
-                let rawKlines = null;
-                let dailyKlines = null;
-
-                // 1. Fetch Realtime Price
-                try {
-                    const rPrice = await fetch('https://fapi.binance.com/fapi/v1/ticker/price?symbol=BTCUSDT').then(r => r.json());
-                    if (rPrice && rPrice.price) currentPrice = parseFloat(rPrice.price);
-                } catch(e) {}
-
-                if (!currentPrice) {
-                    const rPrice = await fetch('https://api.coincap.io/v2/assets/bitcoin').then(r => r.json());
-                    if (rPrice && rPrice.data) currentPrice = parseFloat(rPrice.data.priceUsd);
-                }
-
-                // 2. Fetch H4 K-Lines & Daily K-Lines
-                try {
-                    rawKlines = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=4h&limit=60').then(r => r.json());
-                    dailyKlines = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=5').then(r => r.json());
-                } catch(e) {
-                    try {
-                        rawKlines = await fetch('https://fapi.binance.com/fapi/v1/klines?symbol=BTCUSDT&interval=4h&limit=60').then(r => r.json());
-                        dailyKlines = await fetch('https://fapi.binance.com/fapi/v1/klines?symbol=BTCUSDT&interval=1d&limit=5').then(r => r.json());
-                    } catch(err) {}
-                }
-
-                if (!currentPrice || !rawKlines || !Array.isArray(rawKlines)) return;
-
-                const candles = rawKlines.map(k => [parseFloat(k[0]), parseFloat(k[1]), parseFloat(k[2]), parseFloat(k[3]), parseFloat(k[4])]);
-
-                document.getElementById('btc-price').innerText = '$' + currentPrice.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1});
-                document.getElementById('update-time').innerText = new Date().toLocaleTimeString();
-
-                const closes = candles.map(c => c[4]);
-                const highs = candles.map(c => c[2]);
-                const lows = candles.map(c => c[3]);
-                const len = candles.length;
-
-                // ATR (14)
-                let trs = [];
-                for (let i = 1; i < len; i++) trs.push(Math.max(highs[i] - lows[i], Math.abs(highs[i] - closes[i-1]), Math.abs(lows[i] - closes[i-1])));
-                const atr = trs.slice(-14).reduce((a, b) => a + b, 0) / Math.min(14, trs.length);
-
-                // RSI (14)
-                let gains = 0, losses = 0;
-                for (let i = Math.max(1, len - 14); i < len; i++) {
-                    const diff = closes[i] - closes[i - 1];
-                    if (diff >= 0) gains += diff; else losses -= diff;
-                }
-                const rsi = 100 - (100 / (1 + ((gains/14)/((losses/14)||1))));
-
-                // EMA (50)
-                const k = 2 / (50 + 1);
-                let ema50 = closes.slice(0, Math.min(50, len)).reduce((a, b) => a + b, 0) / Math.min(50, len);
-                for (let i = 50; i < len; i++) ema50 = closes[i] * k + ema50 * (1 - k);
-
-                // Pivot Supports / Resistances
-                const rawLows = [], rawHighs = [];
-                for (let i = 2; i < len - 2; i++) {
-                    if (lows[i] <= lows[i-1] && lows[i] <= lows[i-2] && lows[i] <= lows[i+1] && lows[i] <= lows[i+2]) rawLows.push(lows[i]);
-                    if (highs[i] >= highs[i-1] && highs[i] >= highs[i-2] && highs[i] >= highs[i+1] && highs[i] >= highs[i+2]) rawHighs.push(highs[i]);
-                }
-                const supports = rawLows.filter(p => p < currentPrice).sort((a,b)=>b-a);
-                const resistances = rawHighs.filter(p => p > currentPrice).sort((a,b)=>a-b);
-
-                // ĐẾM SỐ LẦN CHẠM CẢN
-                const res1 = resistances[0] || null;
-                const res2 = resistances[1] || null;
-                const sup1 = supports[0] || null;
-
-                let res1Touches = 0, res2Touches = 0, sup1Touches = 0;
-                const tolerance = 150;
-
-                candles.forEach(c => {
-                    if (res1 && Math.abs(c[2] - res1) <= tolerance) res1Touches++;
-                    if (res2 && Math.abs(c[2] - res2) <= tolerance) res2Touches++;
-                    if (sup1 && Math.abs(c[3] - sup1) <= tolerance) sup1Touches++;
-                });
-
-                document.getElementById('res-touch-1').innerText = res1 ? `Kháng Cự 1: ${formatUSD(res1)} (${res1Touches} chạm)` : 'Kháng Cự 1: Không có';
-                document.getElementById('res-touch-2').innerText = res2 ? `Kháng Cự 2: ${formatUSD(res2)} (${res2Touches} chạm)` : 'Kháng Cự 2: Không có';
-                document.getElementById('sup-touch-1').innerText = sup1 ? `Hỗ Trợ 1: ${formatUSD(sup1)} (${sup1Touches} chạm)` : 'Hỗ Trợ 1: Không có';
-
-                // TÌM SMC ORDER BLOCKS
-                let bullishOB = null, bearishOB = null;
-                for (let i = len - 2; i > Math.max(2, len - 35); i--) {
-                    const c = candles[i];
-                    const nextClose = closes[i+1];
-
-                    if (c[4] < c[1] && !bullishOB && nextClose > c[2]) {
-                        bullishOB = { top: Math.min(c[1], c[2]), bottom: c[3] };
-                    }
-                    if (c[4] > c[1] && !bearishOB && nextClose < c[3]) {
-                        bearishOB = { top: c[2], bottom: Math.max(c[1], c[4]) };
-                    }
-                }
-
-                // Render Top Bar Metrics
-                document.getElementById('rsi-val').innerText = rsi.toFixed(1);
-                document.getElementById('atr-val').innerText = '$' + Math.round(atr);
-                document.getElementById('ema50-val').innerText = formatUSD(ema50);
-                document.getElementById('trend-val').innerText = currentPrice > ema50 ? 'BULLISH (TĂNG)' : 'BEARISH (GIẢM)';
-                document.getElementById('trend-val').style.color = currentPrice > ema50 ? 'var(--green-accent)' : 'var(--red-accent)';
-
-                document.getElementById('bull-ob').innerText = bullishOB ? `Bullish OB: ${formatUSD(bullishOB.bottom)} - ${formatUSD(bullishOB.top)}` : 'Bullish OB: Chưa tạo';
-                document.getElementById('bear-ob').innerText = bearishOB ? `Bearish OB: ${formatUSD(bearishOB.bottom)} - ${formatUSD(bearishOB.top)}` : 'Bearish OB: Chưa tạo';
-
-                // TÍNH TOÁN METHOD_OLD + DCA 2 TẦNG
-                const isBullish = currentPrice > ema50 || rsi < 40;
-                const side = isBullish ? 'LONG' : 'SHORT';
-
-                let entry1, entry2, entryAvg, sl, tp1, tp2;
-
-                if (side === 'LONG') {
-                    entry1 = bullishOB ? Math.round(bullishOB.top) : Math.round(supports[0] || currentPrice * 0.985);
-                    entry2 = bullishOB ? Math.round(bullishOB.bottom) : Math.round(entry1 - 350);
-                    entryAvg = Math.round((entry1 * 0.4) + (entry2 * 0.6));
-                    sl = Math.round(entry2 - Math.max(250, atr * 0.8));
-                    
-                    const risk = entryAvg - sl;
-                    tp1 = entryAvg + risk;
-                    tp2 = entryAvg + (risk * 2);
-                } else {
-                    entry1 = bearishOB ? Math.round(bearishOB.bottom) : Math.round(resistances[0] || currentPrice * 1.015);
-                    entry2 = bearishOB ? Math.round(bearishOB.top) : Math.round(entry1 + 350);
-                    entryAvg = Math.round((entry1 * 0.4) + (entry2 * 0.6));
-                    sl = Math.round(entry2 + Math.max(250, atr * 0.8));
-                    
-                    const risk = sl - entryAvg;
-                    tp1 = entryAvg - risk;
-                    tp2 = entryAvg - (risk * 2);
-                }
-
-                // OPTION C ENGINE 1: QUẢN TRỊ VỐN & SIZING ĐỘNG
-                const userCapital = parseFloat(document.getElementById('capital-input').value) || 1000;
-                const maxRiskUSD = userCapital * 0.01; // Risk 1%
-                const slDistPct = Math.abs(entryAvg - sl) / entryAvg;
-                const totalPositionUSD = maxRiskUSD / slDistPct;
-                const suggestedLev = Math.min(20, Math.max(2, Math.ceil(totalPositionUSD / userCapital)));
-
-                document.getElementById('risk-usd').innerText = `$${maxRiskUSD.toFixed(1)}`;
-                document.getElementById('vol-entry1').innerText = `$${(totalPositionUSD * 0.4).toFixed(0)} (${((totalPositionUSD * 0.4) / entry1).toFixed(3)} BTC)`;
-                document.getElementById('vol-entry2').innerText = `$${(totalPositionUSD * 0.6).toFixed(0)} (${((totalPositionUSD * 0.6) / entry2).toFixed(3)} BTC)`;
-                document.getElementById('suggested-lev').innerText = `x${suggestedLev} (Vol: $${totalPositionUSD.toFixed(0)})`;
-
-                // OPTION C ENGINE 2: CHỈ SỐ FVG
-                let hasFVGNear = false;
-                for (let i = len - 2; i > len - 10; i--) {
-                    if (candles[i][2] < candles[i-2][3] || candles[i][3] > candles[i-2][2]) {
-                        hasFVGNear = true; break;
-                    }
-                }
-                const cardFVG = document.getElementById('card-fvg');
-                document.getElementById('val-fvg').innerText = hasFVGNear ? "CÓ FVG LỰC ĐẨY" : "KHÔNG CÓ FVG";
-                document.getElementById('val-fvg').className = hasFVGNear ? "adv-val text-green" : "adv-val text-red";
-                document.getElementById('sub-fvg').innerText = hasFVGNear ? "● Có sóng Cá Voi hỗ trợ" : "● Sóng đi êm thiếu xung lực";
-                cardFVG.className = hasFVGNear ? "adv-card card-green-bg" : "adv-card card-red-bg";
-
-                // OPTION C ENGINE 3: LIQUIDITY SWEEP
-                const lastCandle = candles[len - 1];
-                let isSweep = false;
-                if (side === 'LONG' && lastCandle[3] < (supports[0] || 0) && lastCandle[4] > (supports[0] || 0)) isSweep = true;
-                if (side === 'SHORT' && lastCandle[2] > (resistances[0] || 999999) && lastCandle[4] < (resistances[0] || 999999)) isSweep = true;
-
-                const cardSweep = document.getElementById('card-sweep');
-                document.getElementById('val-sweep').innerText = isSweep ? "ĐÃ QUÉT RÂU SL" : "CHƯA QUÉT RÂU";
-                document.getElementById('val-sweep').className = isSweep ? "adv-val text-green" : "adv-val text-red";
-                document.getElementById('sub-sweep').innerText = isSweep ? "● Bẫy retail đã kích hoạt" : "● Cẩn trọng bị thò râu";
-                cardSweep.className = isSweep ? "adv-card card-green-bg" : "adv-card card-red-bg";
-
-                // OPTION C ENGINE 4: PDH/PDL TRACKER
-                let pdh = 0, pdl = 0, isPDHSweep = false;
-                if (dailyKlines && dailyKlines.length >= 2) {
-                    const prevDay = dailyKlines[dailyKlines.length - 2];
-                    pdh = parseFloat(prevDay[2]);
-                    pdl = parseFloat(prevDay[3]);
-                    if (currentPrice > pdh || currentPrice < pdl) isPDHSweep = true;
-                }
-                const cardPDH = document.getElementById('card-pdh');
-                document.getElementById('val-pdh').innerText = isPDHSweep ? "QUÉT ĐỈNH/ĐÁY NGÀY" : "TRONG BIÊN NGÀY";
-                document.getElementById('val-pdh').className = isPDHSweep ? "adv-val text-green" : "adv-val text-red";
-                document.getElementById('sub-pdh').innerText = `● PDH: $${Math.round(pdh)} | PDL: $${Math.round(pdl)}`;
-                cardPDH.className = isPDHSweep ? "adv-card card-green-bg" : "adv-card card-red-bg";
-
-                // OPTION C ENGINE 5: RISK / REWARD RATIO
-                const riskAmt = Math.abs(entryAvg - sl);
-                const rewardAmt = Math.abs(tp1 - entryAvg);
-                const rrRatio = riskAmt > 0 ? (rewardAmt / riskAmt).toFixed(2) : 0;
-
-                const cardRR = document.getElementById('card-rr');
-                document.getElementById('val-rr').innerText = `1 : ${rrRatio}`;
-                document.getElementById('val-rr').className = rrRatio >= 1.2 ? "adv-val text-green" : "adv-val text-red";
-                document.getElementById('sub-rr').innerText = rrRatio >= 1.2 ? "● Tỷ lệ Lời/Lỗ an toàn" : "● Ăn mỏng hơn rủi ro SL";
-                cardRR.className = rrRatio >= 1.2 ? "adv-card card-green-bg" : "adv-card card-red-bg";
-
-                // Decision Matrix Evaluation
-                let isTrendAligned = (side === "LONG" && entryAvg > ema50) || (side === "SHORT" && entryAvg < ema50);
-                let hasRoomToTP1 = true;
-                let roomDistance = 0;
-
-                if (side === "LONG") {
-                    let obstacle = bearishOB ? bearishOB.bottom : (resistances[0] || 999999);
-                    roomDistance = Math.round(obstacle - tp1);
-                    hasRoomToTP1 = roomDistance > 0;
-                } else {
-                    let obstacle = bullishOB ? bullishOB.top : (supports[0] || 0);
-                    roomDistance = Math.round(tp1 - obstacle);
-                    hasRoomToTP1 = roomDistance > 0;
-                }
-
-                let isVolatileEnough = atr >= 250;
-                let isRecommended = isTrendAligned && hasRoomToTP1 && isVolatileEnough && (rrRatio >= 1.0);
-
-                // Market Psychology System Inference
-                let inferenceStr = "";
-                if (side === "LONG") {
-                    if (rsi < 35 || rsi < 40) inferenceStr = "Phe Bán kiệt sức + Cá Voi gom hàng";
-                    else inferenceStr = "Giá chạm vùng Hỗ Trợ / Bullish OB H4";
-                } else {
-                    if (rsi > 65 && currentPrice > ema50) inferenceStr = "Động lượng Mua quá mạnh, dễ lủng Cản";
-                    else if (rsi > 65 || rsi > 70) inferenceStr = "Phe Mua kiệt sức + Cá Voi xả hàng";
-                    else inferenceStr = "Giá chạm vùng Kháng Cự / Bearish OB H4";
-                }
-
-                // Update UI Elements
-                const sideEl = document.getElementById('old-side');
-                sideEl.innerText = side;
-                sideEl.className = `badge-side ${side === 'LONG' ? 'side-long' : 'side-short'}`;
-
-                const recEl = document.getElementById('old-rec');
-                recEl.innerText = isRecommended ? "🟢 ĐỀ NGHỊ (XÁC SUẤT CAO)" : "🔴 KHÔNG ĐỀ NGHỊ (RỦI RO / CHE CẢN)";
-                recEl.className = `rec-box ${isRecommended ? 'rec-green' : 'rec-red'}`;
-
-                document.getElementById('inference-text').innerText = `"${inferenceStr}"`;
-
-                document.getElementById('entry-1').innerText = formatUSD(entry1);
-                document.getElementById('entry-2').innerText = formatUSD(entry2);
-                document.getElementById('entry-avg').innerText = formatUSD(entryAvg);
-                document.getElementById('old-sl').innerText = formatUSD(sl);
-                document.getElementById('old-tp1').innerText = formatUSD(tp1);
-                document.getElementById('old-tp2').innerText = formatUSD(tp2);
-
-                // Matrix Checklist UI
-                updateCheckItem('check-trend', isTrendAligned, isTrendAligned ? "1. Thuận Xu Hướng EMA50 H4" : "1. Ngược Xu Hướng EMA50 H4");
-                updateCheckItem('check-room', hasRoomToTP1, hasRoomToTP1 ? `2. TP1 Trống Cản (+${roomDistance}$)` : "2. Cản H4 Che Chắn TP1");
-                updateCheckItem('check-atr', isVolatileEnough, `3. Biên Độ ATR = $${Math.round(atr)} (${isVolatileEnough ? 'Sóng đủ lớn' : 'Sideway nhẹ'})`);
-                updateCheckItem('check-ob', true, "4. Định Vị SMC OB / S/R Chuẩn");
-
-            } catch (err) {
-                console.error("Option C Engine Error:", err);
-            }
-        }
-
-        function updateCheckItem(id, isPass, text) {
-            const el = document.getElementById(id);
-            el.innerHTML = `<span class="${isPass ? 'check-pass' : 'check-fail'}">${isPass ? '✔' : '✖'}</span> <span>${text}</span>`;
-        }
-
-        fetchMarketAndCalculate();
-        setInterval(fetchMarketAndCalculate, 10000);
-    </script>
+loadDashboard();
+setupAutoRefresh();
+</script>
 </body>
 </html>
